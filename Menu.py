@@ -19,7 +19,7 @@ class Menu:
         if self.unique_answers_flag:
             print_variants = {print(f'нажмите "{k}" if {self.description} {self.variants[k]}') for k in self.variants}
         else:
-            print_variants = {print(f'нажмите {k} - {self.variants[k]}') for k in self.variants}
+            print_variants = {print(f'нажмите {k} - {self.variants[k]}') for k in self.variants if k}
 
     def get_user_answer(self):
         while True:
