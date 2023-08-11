@@ -1,4 +1,4 @@
-import colorama
+from  colorama import Fore
 from random import choice
 from Menu import Menu
 
@@ -18,6 +18,14 @@ class TurnController:
         self.turn = turn_count
 
     @property
+    def deck(self):
+        return self.turn_deck
+
+    @deck.setter
+    def deck(self, new_deck):
+        self.turn_deck = new_deck
+
+    @property
     def turn_deck_data(self):
         return {
             1: ['первый игрок']*3,
@@ -26,10 +34,21 @@ class TurnController:
             4: ['первый игрок', 'второй игрок', 'третий игрок', 'четвертый игрок']
         }
 
+    @property
+    def color_card_data(self):
+        return {
+            'первый игрок': Fore.YELLOW,
+            'второй игрок': Fore.BLUE,
+            'третий игрок': Fore.MAGENTA,
+            'четвертый игрок': Fore.GREEN,
+            'НЕМЕЗИДА': Fore.RED
+        }
+
     def create_turn_deck(self):
         deck = self.turn_deck_data[self.players]
         deck.extend(['НЕМЕЗИДА']*2)
-        self.turn_deck = dict(enumerate(deck, 1))
+        self.turn_deck = [self.color_card_data[c]+c+Fore.RESET for c in deck]
+        self.turn_deck = dict(enumerate(self.turn_deck, 1))
         return self.turn_deck
 
     def mix_turn_deck(self):
@@ -41,10 +60,12 @@ class TurnController:
             new_deck.append(el)
         return new_deck
 
+    def pull_a_card(self):
+        card = self.deck.pop(0)
+        return card
+
 
 g = TurnController(2)
-g.create_turn_deck()
-print(g.turn_deck)
 while True:
     gm = Menu(topic='***ход ' + str(g.turn_count) + '***',
               variants=('тянуть карту очередности хода', 'конец игры'))
@@ -54,21 +75,21 @@ while True:
     if answ == 'конец игры':
         break
     else:
-        deck = g.mix_turn_deck()
-        while deck:
-            #print(deck)
-            card_index = 0
-            card = deck.pop(card_index)
+        g.create_turn_deck()
+        g.deck = g.mix_turn_deck()
+        #print(g.deck)
+        while g.deck:
+            card = g.pull_a_card()
             topic = f'***ход делает - {card}***\n'
 
-            if len(deck) > 1:
+            if len(g.deck) > 1:
                 fm = Menu(topic, variants=('тянуть следующую карту', 'посмотреть следующую карту'))
             else:
                 fm = Menu(topic, variants=('тянуть последнюю карту',))
 
-            if not deck:
+            if not g.deck:
                 fm.print_a_topic()
-                print('***turn ' + str(g.turn_count) + ' finished***\n')
+                print('***  раунд ' + str(g.turn_count) + ' окончен***\n')
                 g.turn_count += 1
             else:
                 fm.print_a_topic()
@@ -76,20 +97,16 @@ while True:
                 answ2 = fm.get_user_answer()
 
                 if answ2 == 'посмотреть следующую карту':
-                    next_index = card_index + 1
-                    next_card = deck[next_index]
+                    next_card = g.pull_a_card()
 
                     sm = Menu(topic=f'***следующим ходит - {next_card}***\n',
-                              variants=('пусть ходит', 'В КОНЕЦ КОЛОДЫ!'))
+                               variants=('пусть ходит', 'В КОНЕЦ КОЛОДЫ!'))
                     sm.print_a_topic()
                     sm.print_variants()
                     answ3 = sm.get_user_answer()
 
                     if answ3 == 'В КОНЕЦ КОЛОДЫ!':
-                        next_card_to_end_of_deck = deck.pop(next_index)
-                        deck.append(next_card_to_end_of_deck)
-                        print(f'***{next_card_to_end_of_deck} ходит последним***\n')
+                        g.deck.append(next_card)
+                        print(f'***{next_card} ходит последним***\n')
                     else:
-                        continue
-
-                card_index += 1
+                        g.deck.insert(0, next_card)
